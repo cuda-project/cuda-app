@@ -11,11 +11,16 @@ __global__ void global_reduce_kernel(float * d_out, float * d_in){
     // do reduction in global mem
     for(unsigned int s = blockDim.x / 2; s > 0; s >>=1){
         if(tid < s){
-            d_in[myId] += d_in[myId + s];
+            d_in[myId] += d_in[myId + s]; //直接操作全局内存 d_in （内存一直在那里）
         }
+
+        // 单个线程执行的过程中 对应的第一个小片段执行完后，等待block中所有的线性在第一个小片段都运行完后，
+        // 再进入第二个小片段执行达到对折相加的效果
+        // 备注: block线程还是原来的那些线程 只是在线程运行中每一个片段等待了一下
         __syncthreads();
     }
 
+    // 如果是第0号线程 将对应的结果 输出给 线程对应block块， 做为第一个给block块的最终结果
     if(tid == 0){
         d_out[blockIdx.x] = d_in[myId];
     }
@@ -104,8 +109,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "error: no devices supporting CUDA.\n");
         exit(EXIT_FAILURE);
     }
-    std::cout << " #### deviceCount:" << deviceCount << std::endl;
-    printf(" #### deviceCount:%d\n", deviceCount);
+    std::cout << "#### deviceCount:" << deviceCount << std::endl;
 
     int dev = 0;
     cudaSetDevice(dev);
@@ -124,7 +128,7 @@ int main(int argc, char **argv) {
 
     const int ARRAY_SIZE = 1 << 20;
     const int ARRAY_BYTES = ARRAY_SIZE * sizeof(float);
-    printf(" ####  ARRAY_SIZE:%d \n", ARRAY_SIZE);
+    printf("#### ARRAY_SIZE:%d \n", ARRAY_SIZE);
 
     // generate the input array on the host
     float h_in[ARRAY_SIZE];
@@ -134,6 +138,8 @@ int main(int argc, char **argv) {
         h_in[i] = -1.0f + (float)random()/((float)RAND_MAX/2.0f);
         sum += h_in[i];
     }
+
+    printf("#### CPU sum求和：%f \n", sum);
 
     // declare GPU memory pointers
     float * d_in, * d_intermediate, * d_out;
@@ -160,6 +166,7 @@ int main(int argc, char **argv) {
         case 0:
             printf("Running global reduce \n");
             cudaEventRecord(start, 0);
+            //修改了全局内存  如果进行幂等操作 GPU执行reduce的值 和 cpu计算sum的值就 不一致
             for(int i=0;i<100;i++){
                 reduce(d_out, d_intermediate, d_in, ARRAY_SIZE, false);
             }
@@ -168,6 +175,7 @@ int main(int argc, char **argv) {
         case 1:
             printf("Running reduce with shread mem\n");
             cudaEventRecord(start, 0);
+            //因为使用了 共享内存 可以进行幂等操作  多次GPU执行reduce的值 和 cpu计算sum的值 一致
             for(int i=0;i<100;i++){
                 reduce(d_out, d_intermediate, d_in, ARRAY_SIZE, true);
             }
@@ -188,6 +196,8 @@ int main(int argc, char **argv) {
     cudaMemcpy(&h_out, d_out, sizeof(float), cudaMemcpyDeviceToHost);
 
     printf("average time elapsed: %f\n", elapsedTime);
+
+    printf("#### GPU reduce求和: %f\n", h_out);
 
     // free GPU memory allocation
     cudaFree(d_in);
