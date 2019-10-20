@@ -1,7 +1,7 @@
 #include "../common/book.h"
 
 /**
- * cd
+ * cd /home/tonye/cuda-workspace/cuda-app/cuda01/c03
  * nvcc -o hello_world hello_world.cu
  * ./hello_world
  * @return
