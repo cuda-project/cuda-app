@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "../include/gputimer.h"
 
 //单block单thread向量加
 __global__ void vector_add_gpu_1(float *d_a, float * d_b, float *d_c, int n){
@@ -31,6 +32,11 @@ __global__ void vector_add_gpu_3(float *d_a, float *d_b, float *d_c, int n){
     }
 }
 
+/*
+cd /home/tonye/cuda-workspace/cuda-app/gpu_speed
+nvcc vector_add1.cu -o vector_add1
+./vector_add1
+ */
 int main(int argc, char** argv){
 
     const int ARRAY_SIZE = 65536;
@@ -45,9 +51,7 @@ int main(int argc, char** argv){
 
     float *d_a, *d_b, *d_c;
 
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
+    GpuTimer timer;
 
     cudaMalloc((void **)&d_a, ARRAY_BYTES);
     cudaMalloc((void **)&d_b, ARRAY_BYTES);
@@ -56,17 +60,13 @@ int main(int argc, char** argv){
     cudaMemcpy(d_a, a, ARRAY_BYTES, cudaMemcpyHostToDevice);
     cudaMemcpy(d_b, b, ARRAY_BYTES, cudaMemcpyHostToDevice);
 
-    cudaEventRecord(start, 0);
+    timer.Start();
     //vector_add_gpu_1<<<1, 1>>>(d_a, d_b, d_c, ARRAY_SIZE);
     //vector_add_gpu_2<<<1, 5>>>(d_a, d_b, d_c, ARRAY_SIZE);
     vector_add_gpu_3<<<100,100000>>>(d_a, d_b, d_c, ARRAY_SIZE);
-    cudaEventRecord(stop, 0);
+    timer.Stop();
 
-    cudaEventSynchronize(stop);
-    float elapsedTime;
-    cudaEventElapsedTime(&elapsedTime, start, stop);
-    printf("time elapsed: %f\n", elapsedTime);
-
+    printf("time elapsed: %f\n", timer.Elapsed());
 
     cudaMemcpy(c, d_c, ARRAY_BYTES, cudaMemcpyDeviceToHost);
 
