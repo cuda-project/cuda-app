@@ -33,7 +33,7 @@ __global__ void vector_add_gpu_3(float *d_a, float *d_b, float *d_c, int n){
 
 int main(int argc, char** argv){
 
-    const int ARRAY_SIZE = 10;
+    const int ARRAY_SIZE = 65536;
     const int ARRAY_BYTES = sizeof(ARRAY_SIZE) * ARRAY_SIZE;
 
     float a[ARRAY_SIZE], b[ARRAY_SIZE], c[ARRAY_SIZE];
@@ -45,6 +45,10 @@ int main(int argc, char** argv){
 
     float *d_a, *d_b, *d_c;
 
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
     cudaMalloc((void **)&d_a, ARRAY_BYTES);
     cudaMalloc((void **)&d_b, ARRAY_BYTES);
     cudaMalloc((void **)&d_c, ARRAY_BYTES);
@@ -52,17 +56,24 @@ int main(int argc, char** argv){
     cudaMemcpy(d_a, a, ARRAY_BYTES, cudaMemcpyHostToDevice);
     cudaMemcpy(d_b, b, ARRAY_BYTES, cudaMemcpyHostToDevice);
 
-
+    cudaEventRecord(start, 0);
     //vector_add_gpu_1<<<1, 1>>>(d_a, d_b, d_c, ARRAY_SIZE);
     //vector_add_gpu_2<<<1, 5>>>(d_a, d_b, d_c, ARRAY_SIZE);
-    vector_add_gpu_3<<<3,3>>>(d_a, d_b, d_c, ARRAY_SIZE);
+    vector_add_gpu_3<<<100,100000>>>(d_a, d_b, d_c, ARRAY_SIZE);
+    cudaEventRecord(stop, 0);
+
+    cudaEventSynchronize(stop);
+    float elapsedTime;
+    cudaEventElapsedTime(&elapsedTime, start, stop);
+    printf("time elapsed: %f\n", elapsedTime);
+
 
     cudaMemcpy(c, d_c, ARRAY_BYTES, cudaMemcpyDeviceToHost);
 
-    for(int i=0;i<ARRAY_SIZE;i++){
-        printf("%f", c[i]);
-        printf(((i%4)!=3)?"\t":"\n");
-    }
+//    for(int i=0;i<ARRAY_SIZE;i++){
+//        printf("%f", c[i]);
+//        printf(((i%4)!=3)?"\t":"\n");
+//    }
 
     printf("\n");
 
