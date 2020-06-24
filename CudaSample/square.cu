@@ -8,7 +8,7 @@ __global__ void square(float* d_out, float* d_in){
 
 
 /**
- * cd /home/tonye/cuda-workspace/cuda-app/CudaSample
+ * cd ./CudaSample
  * nvcc square.cu -o square -Wno-deprecated-gpu-targets
  *
  * @param argc
