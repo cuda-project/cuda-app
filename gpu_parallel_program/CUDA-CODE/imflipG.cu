@@ -38,26 +38,28 @@ struct ImgProp{
 __global__
 void Vflip(uch *ImgDst, uch *ImgSrc, ui Hpixels, ui Vpixels)
 {
-	ui ThrPerBlk = blockDim.x;
-	ui MYbid = blockIdx.x;
-	ui MYtid = threadIdx.x;
-	ui MYgtid = ThrPerBlk * MYbid + MYtid;
-
-	ui BlkPerRow = (Hpixels + ThrPerBlk - 1) / ThrPerBlk;  // ceil
-	ui RowBytes = (Hpixels * 3 + 3) & (~3);
-	ui MYrow = MYbid / BlkPerRow;
-	ui MYcol = MYgtid - MYrow*BlkPerRow*ThrPerBlk;
-	if (MYcol >= Hpixels) return;			// col out of range
-	ui MYmirrorrow = Vpixels - 1 - MYrow;
-	ui MYsrcOffset = MYrow       * RowBytes;
-	ui MYdstOffset = MYmirrorrow * RowBytes;
-	ui MYsrcIndex = MYsrcOffset + 3 * MYcol;
-	ui MYdstIndex = MYdstOffset + 3 * MYcol;
-
-	// swap pixels RGB   @MYcol , @MYmirrorcol
-	ImgDst[MYdstIndex] = ImgSrc[MYsrcIndex];
-	ImgDst[MYdstIndex + 1] = ImgSrc[MYsrcIndex + 1];
-	ImgDst[MYdstIndex + 2] = ImgSrc[MYsrcIndex + 2];
+    // 1. 我是谁， 核函数如何获取自己的ID
+    ui ThrPerBlk = blockDim.x;
+    ui MYbid = blockIdx.x;
+    ui MYtid = threadIdx.x;
+    ui MYgtid = ThrPerBlk * MYbid + MYtid; //全局线程ID (索引线性化)
+    // 2. 我的任务是什么，核函数根据ID来确定他应该处理哪部分数据
+    ui BlkPerRow = (Hpixels + ThrPerBlk - 1) / ThrPerBlk;  // ceil
+    ui RowBytes = (Hpixels * 3 + 3) & (~3);
+    ui MYrow = MYbid / BlkPerRow; // 确定要复制像素在哪一行哪一列
+    ui MYcol = MYgtid - MYrow*BlkPerRow*ThrPerBlk;
+    if (MYcol >= Hpixels) return;        // col out of range
+    ui MYmirrorrow = Vpixels - 1 - MYrow;  // 确定被复制到镜像行索引
+    ui MYsrcOffset = MYrow       * RowBytes;
+    ui MYdstOffset = MYmirrorrow * RowBytes;
+    ui MYsrcIndex = MYsrcOffset + 3 * MYcol;
+    ui MYdstIndex = MYdstOffset + 3 * MYcol;
+    // 执行 一次复制3个字节
+    // swap pixels RGB   @MYcol , @MYmirrorcol
+    ImgDst[MYdstIndex] = ImgSrc[MYsrcIndex];
+    ImgDst[MYdstIndex + 1] = ImgSrc[MYsrcIndex + 1];
+    ImgDst[MYdstIndex + 2] = ImgSrc[MYsrcIndex + 2];
+    //printf("#### vfip\n");
 }
 
 
@@ -129,6 +131,8 @@ uch *ReadBMPlin(char* fn)
 	// extract image height and width from header
 	int width = *(int*)&HeaderInfo[18];			ip.Hpixels = width;
 	int height = *(int*)&HeaderInfo[22];		ip.Vpixels = height;
+    // i & (~3) '丢掉整数最低的两位'
+    // (k + 3) & (~3) '把整数向上对齐到4的倍数'
 	int RowBytes = (width * 3 + 3) & (~3);		ip.Hbytes = RowBytes;
 	//save header for re-use
 	memcpy(ip.HeaderInfo, HeaderInfo,54);
