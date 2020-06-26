@@ -133,6 +133,7 @@ uch *ReadBMPlin(char* fn)
 	int height = *(int*)&HeaderInfo[22];		ip.Vpixels = height;
     // i & (~3) '丢掉整数最低的两位'
     // (k + 3) & (~3) '把整数向上对齐到4的倍数'
+    // 彩色图像（biBitCount=24） 1个像素占用3个字节  => 1D linear array. Hbytes(long) long占用4个字节所以 必须向上对齐到4的倍数
 	int RowBytes = (width * 3 + 3) & (~3);		ip.Hbytes = RowBytes;
 	//save header for re-use
 	memcpy(ip.HeaderInfo, HeaderInfo,54);

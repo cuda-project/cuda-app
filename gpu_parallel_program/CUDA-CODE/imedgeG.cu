@@ -158,7 +158,7 @@ void SobelKernel(double *ImgGrad, double *ImgTheta, double *ImgGauss, ui Hpixels
 			}
 		}
 		ImgGrad[MYpixIndex] = sqrt(GX*GX + GY*GY);
-		ImgTheta[MYpixIndex] = atan(GX / GY)*180.0 / PI;
+		ImgTheta[MYpixIndex] = atan(GX / GY)*180.0 / PI;  // atan 值 [-pi/2, pi/2]  弧度转角度  atan(1) = pi/4
 	}
 }
 
@@ -208,7 +208,7 @@ void ThresholdKernel(uch *ImgResult, double *ImgGrad, double *ImgTheta, ui Hpixe
 				PIXVAL = ((ImgGrad[MYpixIndex - Hpixels]>H) || (ImgGrad[MYpixIndex + Hpixels]>H)) ? EDGE : NOEDGE;
 			}
 			else if ((T>22.5) && (T <= 67.5)){
-				// Look at upper right, lower left: [row-1][col+1]  and  [row+1][col-1]
+				// Look at upper right,  lower left: [row-1][col+1]  and  [row+1][col-1]
 				PIXVAL = ((ImgGrad[MYpixIndex - Hpixels + 1]>H) || (ImgGrad[MYpixIndex + Hpixels - 1]>H)) ? EDGE : NOEDGE;
 			}
 			else if ((T >= -67.5) && (T<-22.5)){
