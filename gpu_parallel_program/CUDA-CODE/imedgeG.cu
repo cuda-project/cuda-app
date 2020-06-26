@@ -435,7 +435,14 @@ int main(int argc, char **argv)
 	printf("\n\n----------------------------------------------------------------------------\n");
 	printf("%s    ComputeCapab=%d.%d  [max %s blocks; %d thr/blk] \n",
 		GPUprop.name, GPUprop.major, GPUprop.minor, SupportedBlocks, MaxThrPerBlk);
-	printf("----------------------------------------------------------------------------\n");
+    printf("totalGlobalMem=%ld  totalConstMem=%ld  sharedMemPerBlock=%ld sharedMemPerBlockOptin=%ld \n"
+           " sharedMemPerMultiprocessor=%ld l2CacheSize=%d  regsPerBlock=%d warpSize=%d\n" ,
+        GPUprop.totalGlobalMem, GPUprop.totalConstMem, GPUprop.sharedMemPerBlock, GPUprop.sharedMemPerBlockOptin,
+        GPUprop.sharedMemPerMultiprocessor, GPUprop.l2CacheSize, GPUprop.regsPerBlock, GPUprop.warpSize);
+    printf("maxThreadsPerMultiProcessor=%d multiProcessorCount=%d maxThreadsDim[3]=%d maxGridSize[3]=%d\n",
+        GPUprop.maxThreadsPerMultiProcessor, GPUprop.multiProcessorCount, GPUprop.maxThreadsDim[3], GPUprop.maxGridSize[3]);
+
+    printf("----------------------------------------------------------------------------\n");
 	printf("%s %s %s %u %d %d  [%u BLOCKS, %u BLOCKS/ROW]\n", ProgName, InputFileName, OutputFileName, ThrPerBlk, ThreshLo, ThreshHi, NumBlocks, BlkPerRow);
 	printf("----------------------------------------------------------------------------\n");
 	printf("              CPU->GPU Transfer =%7.2f ms  ...  %4d MB  ...  %6.2f GB/s\n", tfrCPUtoGPU, DATAMB(IMAGESIZE), DATABW(IMAGESIZE,tfrCPUtoGPU));
