@@ -333,7 +333,7 @@ int main(int argc, char **argv)
 	int NumGPUs = 0;
 	cudaGetDeviceCount(&NumGPUs);
 	if (NumGPUs == 0){
-		printf("\nNo CUDA Device is available\n");
+		printf("\nNo CUbnbnA Device is available\n");
 		goto EXITERROR;
 	}
 	cudaStatus = cudaSetDevice(0);
@@ -441,6 +441,7 @@ int main(int argc, char **argv)
         GPUprop.sharedMemPerMultiprocessor, GPUprop.l2CacheSize, GPUprop.regsPerBlock, GPUprop.warpSize);
     printf("maxThreadsPerMultiProcessor=%d multiProcessorCount=%d maxThreadsDim[3]=%d maxGridSize[3]=%d\n",
         GPUprop.maxThreadsPerMultiProcessor, GPUprop.multiProcessorCount, GPUprop.maxThreadsDim[3], GPUprop.maxGridSize[3]);
+    printf("regsPerBlock=%d regsPerMultiprocessor=%d\n",GPUprop.regsPerBlock, GPUprop.regsPerMultiprocessor);
 
     printf("----------------------------------------------------------------------------\n");
 	printf("%s %s %s %u %d %d  [%u BLOCKS, %u BLOCKS/ROW]\n", ProgName, InputFileName, OutputFileName, ThrPerBlk, ThreshLo, ThreshHi, NumBlocks, BlkPerRow);
